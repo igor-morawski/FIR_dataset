@@ -2,7 +2,7 @@
 
 ## Examples
 ### Video Files
-_*convert2avi.py*_
+_**convert2avi.py**_
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=jsG0Uuz8XXM
 " target="_blank"><img src="http://img.youtube.com/vi/jsG0Uuz8XXM/0.jpg" 
