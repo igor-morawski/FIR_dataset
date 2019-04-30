@@ -1,7 +1,6 @@
 # FIR_dataset
 
 ## Examples
-### Video Files
 _**convert2avi.py**_
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=jsG0Uuz8XXM
