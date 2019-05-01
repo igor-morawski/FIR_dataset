@@ -1,0 +1,1 @@
+See http://www.youtube.com/watch?feature=player_embedded&v=jsG0Uuz8XXM for seven examples of sequences visualized
