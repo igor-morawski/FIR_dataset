@@ -22,12 +22,17 @@ if __name__ == "__main__":
                              "area": cv2.INTER_AREA}
     parser.add_argument("--interpolation", type=str,
                         default="nearest", choices=interpolation_methods.keys(), help='cv2 interpolation method')
-    parser.add_argument("--download", action="store_true")
+    parser.add_argument("--download", action="store_true",
+                        help='Process all sequences in the dataset. Otherwise chooses n samples')
+    parser.add_argument("--all", action="store_true")
+    parser.add_argument("--samples", type=int, default=10,
+                        help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in % 03d.avi format. If --all read-don\'t-care')
     args = parser.parse_args()
 
     dataset_dir = args.dataset.replace("/", os.sep)
     output_dir = args.output.replace("/", os.sep)
     interpolation_flag = interpolation_methods[args.interpolation]
+    sample_flag = not args.all
 
     if args.download:
         fir.download("..")
@@ -40,7 +45,8 @@ if __name__ == "__main__":
         os.mkdir(output_dir)
 
     print("Loading in and parsing dataset...")
-    dataset = fir.Dataset(dataset_dir)
+    dataset = fir.Dataset(dataset_dir, sample=sample_flag,
+                          samples_k=args.samples)
 
     [_, h, w] = dataset[0].shape
     zoom = 100
@@ -52,8 +58,15 @@ if __name__ == "__main__":
     y_text_min = h_frame - 100
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 4
+
+    fn_idx = 0
     for sequence in tqdm(dataset):
-        video = cv2.VideoWriter(os.path.join(output_dir, sequence.sequencename[:-4]+".avi"), cv2.VideoWriter_fourcc(
+        if sample_flag:
+            fn = "%03d" % fn_idx + ".avi"
+            fn_idx += 1
+        else:
+            fn = sequence.sequencename[:-4] + ".avi"
+        video = cv2.VideoWriter(os.path.join(output_dir, fn), cv2.VideoWriter_fourcc(
             'M', 'J', 'P', 'G'), 10, (w_frame, h_frame))
         # initialize annotation for the whole sequence
         labels = list()
