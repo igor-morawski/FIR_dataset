@@ -90,7 +90,8 @@ class Sequence(np.ndarray):
         obj = np.asarray(pixels.reshape([frames, h, w])).view(cls)
         # add custom sequence attributes
         obj.filename = fn
-        obj.sequencename = fn.split(os.path.sep)[-1]
+        path, sequencename = os.path.split(fn)
+        obj.sequencename = sequencename
         obj.dataset_annotation = dataset_annotation
         return obj
 
