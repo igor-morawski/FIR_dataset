@@ -83,7 +83,7 @@ class Sequence(np.ndarray):
         # read dataframe
         dataframe = pd.read_csv(fn, skiprows=[0, 1], header=None)
         # skip time and PTAT columns
-        pixels = dataframe.iloc[:, 2:].to_numpy()
+        pixels = dataframe.iloc[:, 2:].values
         # reshape to [frames, h, w] array
         frames, h, w = pixels.shape[0], (int)(
             sqrt(pixels.shape[1])), (int)(sqrt(pixels.shape[1]))
