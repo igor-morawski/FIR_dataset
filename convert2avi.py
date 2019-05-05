@@ -39,7 +39,7 @@ if __name__ == "__main__":
                         help='Process all sequences in the dataset. Otherwise chooses n samples')
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--samples", type=int, default=10,
-                        help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in % 03d.avi format. If --all read-don\'t-care')
+                        help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in %%03d.avi format. If --all read-don\'t-care')
     args = parser.parse_args()
 
     print(__doc__)
