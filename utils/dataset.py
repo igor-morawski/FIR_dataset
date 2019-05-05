@@ -92,11 +92,13 @@ def sequence_heatmap(sequence: np.ndarray, min: int = 20, max: int = 40, cv_colo
 
 
 class Dataset():
-    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10):
+    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10, labels = None):
         self.annotation = load_annotation(dataset_dir)
         self.sequences = list_sequences(dataset_dir)
         if sample:
             self.sequences = random.sample(self.sequences, samples_k)
+        if labels:
+            self.labels = labels
 
     def __len__(self):
         return len(self.sequences)
