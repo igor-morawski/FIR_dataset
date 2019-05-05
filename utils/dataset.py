@@ -12,6 +12,33 @@ import random
 import wget
 import zipfile
 
+'''
+Labels used in
+[1] T. Kawashima et al., "Action recognition from extremely low-resolution  
+thermal image sequence," 2017 14th IEEE International Conference on Advanced Video
+and Signal Based Surveillance (AVSS), Lecce, 2017, pp. 1-6.
+
+'''
+PAPER_LABELS_REGEX = dict([
+    (r'walk.*', 0),
+    (r'sitdown', 1),
+    (r'standup', 2),
+    (r'falling.*', 3),
+    (r'^(sit|lie|stand)$', 4),
+])
+
+
+LABELS_REGEX = dict([
+    (r'walk.*', 0),
+    (r'sitdown', 1),
+    (r'standup', 2),
+    (r'falling.*', 3),
+    (r'sit', 4),
+    (r'lie', 5),
+    (r'stand', 6),
+    
+])
+
 SKIP_FRAMES = 20
 DATSAET_URL = "https://github.com/muralab/Low-Resolution-FIR-Action-Dataset/archive/master.zip"
 DATASET_FN_ZIP = "Low-Resolution-FIR-Action-Dataset-master.zip"
