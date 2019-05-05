@@ -1,3 +1,16 @@
+'''
+Convert .csv sequences in FIR dataset to videos (.avi) and save in the output path. 
+By default converts only 10 randomly chosen samples and saves using %03d.avi pattern.
+Run:
+    python convert2avi.py --samples=n
+to specify number n of samples chosen.
+Run:
+    python convert2avi.py --all
+to process all samples and save using sequence's name.
+Run:
+    python convert2avi.py --help
+to get list of all the program arguments.
+'''
 import argparse
 import os
 
@@ -28,6 +41,8 @@ if __name__ == "__main__":
     parser.add_argument("--samples", type=int, default=10,
                         help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in % 03d.avi format. If --all read-don\'t-care')
     args = parser.parse_args()
+
+    print(__doc__)
 
     dataset_dir = args.dataset.replace("/", os.sep)
     output_dir = args.output.replace("/", os.sep)
