@@ -12,6 +12,7 @@ import random
 import wget
 import zipfile
 
+
 '''
 Labels used in
 [1] T. Kawashima et al., "Action recognition from extremely low-resolution  
@@ -66,10 +67,10 @@ def load_annotation(dataset_dir: str) -> pd.core.frame.DataFrame:
                       for fn in generator], ignore_index=True)
 
 
-def read_sequence_annotation(sequencename: str, annotation: pd.core.frame.DataFrame = None) -> list:
+def read_sequence_annotation(sequence_name: str, annotation: pd.core.frame.DataFrame = None) -> list:
     if annotation is None:
         return []
-    sequence_annotation_pd = annotation[annotation[0] == sequencename]
+    sequence_annotation_pd = annotation[annotation[0] == sequence_name]
     return sequence_annotation_pd.iloc[:, 1:].values.tolist()
 
 
@@ -99,6 +100,7 @@ class Dataset():
             self.sequences = random.sample(self.sequences, samples_k)
         if labels:
             self.labels = labels
+        self.directory = dataset_dir
 
     def __len__(self):
         return len(self.sequences)
@@ -107,29 +109,57 @@ class Dataset():
         return Sequence(self.sequences[idx], dataset_annotation=self.annotation)
 
 
+class Action(Dataset):
+    def __init__(self, dataset, label, samples_k=3):
+        annotation = dataset.annotation
+        self.annotation = annotation[annotation[3].str.contains(
+            label)].sample(samples_k)
+        #[sequence for sequence in dataset.sequences if b[0].str.contains(sequence.split(os.path.sep)[-1]).any()]
+        self.sequences = list(self.annotation[0].unique())
+        self.directory = dataset.directory
+
+    def __len__(self):
+        return len(self.annotation)
+
+    def __getitem__(self, idx):
+        sequence_name = self.annotation[0].iloc[idx]
+        fn = os.path.join(self.directory, sequence_name.split("_")[
+                          0], "raw", sequence_name)
+        return Sequence(fn, frame_start=self.annotation[1].iloc[idx], frame_stop=self.annotation[2].iloc[idx])
+
+
 class Sequence(np.ndarray):
-    def __new__(cls, fn: str, dataset_annotation=None):
+    def __new__(cls, fn: str, dataset_annotation=None, frame_start=None, frame_stop=None):
         # read dataframe
         dataframe = pd.read_csv(fn, skiprows=[0, 1], header=None)
         # skip time and PTAT columns
         pixels = dataframe.iloc[:, 2:].values
+        min = pixels[SKIP_FRAMES:].min()
+        max = pixels[SKIP_FRAMES:].max()
+        pixels = pixels[frame_start:frame_stop][:]
         # reshape to [frames, h, w] array
         frames, h, w = pixels.shape[0], (int)(
             sqrt(pixels.shape[1])), (int)(sqrt(pixels.shape[1]))
         obj = np.asarray(pixels.reshape([frames, h, w])).view(cls)
         # add custom sequence attributes
         obj.filename = fn
-        path, sequencename = os.path.split(fn)
-        obj.sequencename = sequencename
+        path, sequence_name = os.path.split(fn)
+        obj.sequence_name = sequence_name
         obj.dataset_annotation = dataset_annotation
+        obj.start = frame_start
+        obj.stop = frame_stop
+        obj.temp_min = min
+        obj.temp_max = max
         return obj
 
     def __array_finalize__(self, obj):
         if obj is None:
             return
         self.filename = getattr(obj, 'filename', None)
-        self.sequencename = getattr(obj, 'sequencename', None)
+        self.sequence_name = getattr(obj, 'sequence_name', None)
         self.dataset_annotation = getattr(obj, 'dataset_annotation', None)
+        self.start = getattr(obj, 'start', None)
+        self.stop = getattr(obj, 'stop', None)
 
     def annotation(self):
-        return read_sequence_annotation(self.sequencename, self.dataset_annotation)
+        return read_sequence_annotation(self.sequence_name, self.dataset_annotation)
