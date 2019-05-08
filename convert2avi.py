@@ -40,6 +40,8 @@ if __name__ == "__main__":
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--samples", type=int, default=10,
                         help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in %%03d.avi format. If --all read-don\'t-care')
+    parser.add_argument("--gamma", type=float, default=None,
+                        help='Gamma correction.')
     args = parser.parse_args()
 
     print(__doc__)
@@ -48,6 +50,12 @@ if __name__ == "__main__":
     output_dir = args.output.replace("/", os.sep)
     interpolation_flag = interpolation_methods[args.interpolation]
     sample_flag = not args.all
+    gamma = args.gamma
+
+    if gamma:
+        lookUpTable = np.empty((1, 256), np.uint8)
+        for i in range(256):
+            lookUpTable[0, i] = np.clip(pow(i / 255.0, gamma) * 255.0, 0, 255)
 
     if args.download:
         fir.download("..")
@@ -98,6 +106,13 @@ if __name__ == "__main__":
                     font_scale/2, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.putText(frame_minmax, "max: %.2f" % max, (x_text_minmax, y_text), font,
                     font_scale/2, (255, 255, 255), 2, cv2.LINE_AA)
+        if gamma:
+            sequence = np.clip(sequence, min, max)
+            sequence = (255*(sequence-min) /
+                        (max-min)).astype(np.uint8)
+            min = 0
+            max = 255
+            sequence = cv2.LUT(sequence, lookUpTable)
         for (heatmap, label) in zip(fir.sequence_heatmap(sequence, min, max), labels):
             heatmap_zoomed = cv2.resize(
                 heatmap, (w_zoomed, h_zoomed), interpolation=interpolation_flag)

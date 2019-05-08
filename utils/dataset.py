@@ -36,7 +36,7 @@ LABELS_REGEX = dict([
     (r'sit', 4),
     (r'lie', 5),
     (r'stand', 6),
-    
+
 ])
 
 SKIP_FRAMES = 20
@@ -81,8 +81,8 @@ def list_sequences(dataset_dir: str) -> list:
 
 def sequence_heatmap(sequence: np.ndarray, min: int = 20, max: int = 40, cv_colormap: int = cv2.COLORMAP_JET) -> np.ndarray:
     sequence_clipped = np.clip(sequence, min, max)
-    sequence_normalized = (255*(sequence_clipped-min) /
-                           (max-min)).astype(np.uint8)
+    sequence_normalized = (255 * ((sequence_clipped-min) /
+                                  (max-min))).astype(np.uint8)
     shape = sequence.shape
 
     heatmap_flat = cv2.applyColorMap(
@@ -92,7 +92,7 @@ def sequence_heatmap(sequence: np.ndarray, min: int = 20, max: int = 40, cv_colo
 
 
 class Dataset():
-    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10, labels = None):
+    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10, labels=None):
         self.annotation = load_annotation(dataset_dir)
         self.sequences = list_sequences(dataset_dir)
         if sample:
