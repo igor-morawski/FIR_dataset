@@ -37,7 +37,7 @@ LABELS_REGEX = dict([
     (r'sit', 4),
     (r'lie', 5),
     (r'stand', 6),
-    
+
 ])
 
 SKIP_FRAMES = 20
@@ -82,8 +82,8 @@ def list_sequences(dataset_dir: str) -> list:
 
 def sequence_heatmap(sequence: np.ndarray, min: int = 20, max: int = 40, cv_colormap: int = cv2.COLORMAP_JET) -> np.ndarray:
     sequence_clipped = np.clip(sequence, min, max)
-    sequence_normalized = (255*(sequence_clipped-min) /
-                           (max-min)).astype(np.uint8)
+    sequence_normalized = (255 * ((sequence_clipped-min) /
+                                  (max-min))).astype(np.uint8)
     shape = sequence.shape
 
     heatmap_flat = cv2.applyColorMap(
@@ -93,7 +93,7 @@ def sequence_heatmap(sequence: np.ndarray, min: int = 20, max: int = 40, cv_colo
 
 
 class Dataset():
-    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10, labels = None):
+    def __init__(self, dataset_dir: str, sample: bool = False, samples_k: int = 10, labels=None):
         self.annotation = load_annotation(dataset_dir)
         self.sequences = list_sequences(dataset_dir)
         if sample:
@@ -107,30 +107,36 @@ class Dataset():
 
     def __getitem__(self, idx):
         return Sequence(self.sequences[idx], dataset_annotation=self.annotation)
-    
-class Label(Dataset):
-    def __init__(self, dataset, label, samples_k = 3):
+
+
+class Action(Dataset):
+    def __init__(self, dataset, label, samples_k=3):
         annotation = dataset.annotation
-        self.annotation = annotation[annotation[3].str.contains(label)].sample(samples_k)
+        self.annotation = annotation[annotation[3].str.contains(
+            label)].sample(samples_k)
         #[sequence for sequence in dataset.sequences if b[0].str.contains(sequence.split(os.path.sep)[-1]).any()]
         self.sequences = list(self.annotation[0].unique())
         self.directory = dataset.directory
-        
 
     def __len__(self):
         return len(self.annotation)
 
     def __getitem__(self, idx):
         sequence_name = self.annotation[0].iloc[idx]
-        fn = os.path.join(self.directory, sequence_name.split("_")[0], "raw", sequence_name)
-        return Sequence(fn, frame_start = self.annotation[1].iloc[idx], frame_stop = self.annotation[2].iloc[idx])
-        
+        fn = os.path.join(self.directory, sequence_name.split("_")[
+                          0], "raw", sequence_name)
+        return Sequence(fn, frame_start=self.annotation[1].iloc[idx], frame_stop=self.annotation[2].iloc[idx])
+
+
 class Sequence(np.ndarray):
-    def __new__(cls, fn: str, dataset_annotation=None, frame_start = None, frame_stop = None):
+    def __new__(cls, fn: str, dataset_annotation=None, frame_start=None, frame_stop=None):
         # read dataframe
         dataframe = pd.read_csv(fn, skiprows=[0, 1], header=None)
         # skip time and PTAT columns
-        pixels = dataframe.iloc[:, 2:].values[frame_start:frame_stop][:]
+        pixels = dataframe.iloc[:, 2:].values
+        min = pixels[SKIP_FRAMES:].min()
+        max = pixels[SKIP_FRAMES:].max()
+        pixels = pixels[frame_start:frame_stop][:]
         # reshape to [frames, h, w] array
         frames, h, w = pixels.shape[0], (int)(
             sqrt(pixels.shape[1])), (int)(sqrt(pixels.shape[1]))
@@ -142,6 +148,8 @@ class Sequence(np.ndarray):
         obj.dataset_annotation = dataset_annotation
         obj.start = frame_start
         obj.stop = frame_stop
+        obj.temp_min = min
+        obj.temp_max = max
         return obj
 
     def __array_finalize__(self, obj):
@@ -155,4 +163,3 @@ class Sequence(np.ndarray):
 
     def annotation(self):
         return read_sequence_annotation(self.sequence_name, self.dataset_annotation)
-
