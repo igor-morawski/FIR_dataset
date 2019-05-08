@@ -1,6 +1,7 @@
 
 import argparse
 import os
+import re
 
 import numpy as np
 import cv2
@@ -9,7 +10,7 @@ from utils import dataset as fir
 
 from tqdm import tqdm
 
-
+import imageio
 
 
 if __name__ == "__main__":
@@ -27,7 +28,7 @@ if __name__ == "__main__":
                         default="nearest", choices=interpolation_methods.keys(), help='cv2 interpolation method')
     parser.add_argument("--download", action="store_true",
                         help='Process all sequences in the dataset. Otherwise chooses n samples')
-    #parser.add_argument("--combine", action="store_true", help='Combine all the gifs together')
+    # parser.add_argument("--combine", action="store_true", help='Combine all the gifs together')
     args = parser.parse_args()
 
     dataset_dir = args.dataset.replace("/", os.sep)
@@ -46,54 +47,23 @@ if __name__ == "__main__":
 
     print("Loading in and parsing dataset...")
     dataset = fir.Dataset(dataset_dir)
-    
-    labels = tuple(fir.LABELS_REGEX)
-    
-    a = fir.Label(dataset, labels[0])
 
-    exit()
+    labels = tuple(fir.LABELS_REGEX)
+    labels_alphanumeric = tuple(re.sub(
+        r"[^a-zA-Z]+", "", label) for label in labels)
+
+    actions = [fir.Action(dataset, label) for label in labels]
+
     [_, h, w] = dataset[0].shape
     zoom = 10
     h_zoomed, w_zoomed = zoom*h, zoom*w
     h_frame, w_frame = (int)(1.1*h_zoomed), w_zoomed
 
-    x_text, y_text = 0, h_frame - 30
-    x_text_minmax = (int)(w_zoomed/2)
-    y_text_min = h_frame - 100
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 4
-
-    fn_idx = 0
-    for sequence in tqdm(dataset):
-        if sample_flag:
-            fn = "%03d" % fn_idx + ".avi"
-            fn_idx += 1
-        else:
-            fn = sequence.sequencename[:-4] + ".avi"
-        video = cv2.VideoWriter(os.path.join(output_dir, fn), cv2.VideoWriter_fourcc(
-            'M', 'J', 'P', 'G'), 10, (w_frame, h_frame))
-        # initialize annotation for the whole sequence
-        labels = list()
-        for _ in range(len(sequence)):
-            labels.append(None)
-        # parse annotation for a sequence
-        for action in sequence.annotation():
-            for idx in range(action[0], action[1]+1):
-                labels[idx] = action[2]
-        frame_minmax = np.zeros((h_frame, w_frame, 3), dtype=np.uint8)
-        min = sequence[fir.SKIP_FRAMES:].min()
-        max = sequence[fir.SKIP_FRAMES:].max()
-        cv2.putText(frame_minmax, "min: %.2f" % min, (x_text_minmax, y_text_min), font,
-                    font_scale/2, (255, 255, 255), 2, cv2.LINE_AA)
-        cv2.putText(frame_minmax, "max: %.2f" % max, (x_text_minmax, y_text), font,
-                    font_scale/2, (255, 255, 255), 2, cv2.LINE_AA)
-        for (heatmap, label) in zip(fir.sequence_heatmap(sequence, min, max), labels):
-            heatmap_zoomed = cv2.resize(
-                heatmap, (w_zoomed, h_zoomed), interpolation=interpolation_flag)
-            frame = frame_minmax.copy()
-            frame[:h_zoomed, :, :] = heatmap_zoomed
-            if label:
-                cv2.putText(frame, label, (x_text, y_text), font,
-                            font_scale, (255, 255, 255), font_scale, cv2.LINE_AA)
-
-            video.write(frame)
+    for action, action_name in tqdm(zip(actions, labels_alphanumeric)):
+        for sequence, i in zip(action, range(len(action))):
+            fn = action_name + str(i) + '.gif'
+            with imageio.get_writer(os.path.join(output_dir, fn), mode='I', duration=0.1) as writer:
+                for heatmap in fir.sequence_heatmap(sequence, min=sequence.temp_min, max=sequence.temp_max):
+                    heatmap_zoomed = cv2.resize(
+                        heatmap, (w_zoomed, h_zoomed), interpolation=interpolation_flag)
+                    writer.append_data(heatmap_zoomed[:, :, ::-1])
