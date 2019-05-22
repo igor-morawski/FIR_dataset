@@ -88,7 +88,7 @@ if __name__ == "__main__":
             fn = "%03d" % fn_idx + ".avi"
             fn_idx += 1
         else:
-            fn = sequence.sequencename[:-4] + ".avi"
+            fn = sequence.sequence_name[:-4] + ".avi"
         video = cv2.VideoWriter(os.path.join(output_dir, fn), cv2.VideoWriter_fourcc(
             'M', 'J', 'P', 'G'), 10, (w_frame, h_frame))
         # initialize annotation for the whole sequence
