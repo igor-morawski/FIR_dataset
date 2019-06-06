@@ -163,7 +163,7 @@ class Sequence(np.ndarray):
         self.dataset_annotation = getattr(obj, 'dataset_annotation', None)
         self.start = getattr(obj, 'start', None)
         self.stop = getattr(obj, 'stop', None)
-        self.PTAT = getattr(obj. 'PTAT', None)
+        self.PTAT = getattr(obj, 'PTAT', None)
 
     def annotation(self):
         return read_sequence_annotation(self.sequence_name, self.dataset_annotation)
