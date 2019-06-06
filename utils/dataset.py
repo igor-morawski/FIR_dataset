@@ -134,8 +134,10 @@ class Sequence(np.ndarray):
         dataframe = pd.read_csv(fn, skiprows=[0, 1], header=None)
         # skip time and PTAT columns
         pixels = dataframe.iloc[:, 2:].values
+        PTAT = dataframe.iloc[:, 1:2].values
         min = pixels[SKIP_FRAMES:].min()
         max = pixels[SKIP_FRAMES:].max()
+        PTAT = PTAT[frame_start:frame_stop]
         pixels = pixels[frame_start:frame_stop][:]
         # reshape to [frames, h, w] array
         frames, h, w = pixels.shape[0], (int)(
@@ -150,6 +152,7 @@ class Sequence(np.ndarray):
         obj.stop = frame_stop
         obj.temp_min = min
         obj.temp_max = max
+        obj.PTAT = PTAT
         return obj
 
     def __array_finalize__(self, obj):
@@ -160,6 +163,7 @@ class Sequence(np.ndarray):
         self.dataset_annotation = getattr(obj, 'dataset_annotation', None)
         self.start = getattr(obj, 'start', None)
         self.stop = getattr(obj, 'stop', None)
+        self.PTAT = getattr(obj. 'PTAT', None)
 
     def annotation(self):
         return read_sequence_annotation(self.sequence_name, self.dataset_annotation)
