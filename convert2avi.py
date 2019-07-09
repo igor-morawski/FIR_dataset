@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--interpolation", type=str,
                         default="nearest", choices=interpolation_methods.keys(), help='cv2 interpolation method')
     parser.add_argument("--download", action="store_true",
-                        help='Process all sequences in the dataset. Otherwise chooses n samples')
+                        help='Download the dataset.')
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--samples", type=int, default=10,
                         help='Number of sequences chosen randomly(if not --all) from dataset to visualize. Stored in %%03d.avi format. If --all read-don\'t-care')
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     font_scale = 4
 
     fn_idx = 0
+
     for sequence in tqdm(dataset):
         if sample_flag:
             fn = "%03d" % fn_idx + ".avi"
@@ -113,6 +114,13 @@ if __name__ == "__main__":
             min = 0
             max = 255
             sequence = cv2.LUT(sequence, lookUpTable)
+        PTAT_compensate = True
+        if PTAT_compensate:
+            sequence = sequence.reshape(
+                [sequence.shape[0], -1]) - sequence.PTAT
+            sequence = sequence.reshape([sequence.shape[0], 16, 16])
+            min = 0
+            max = sequence[fir.SKIP_FRAMES:].max()
         for (heatmap, label) in zip(fir.sequence_heatmap(sequence, min, max), labels):
             heatmap_zoomed = cv2.resize(
                 heatmap, (w_zoomed, h_zoomed), interpolation=interpolation_flag)
