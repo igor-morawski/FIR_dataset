@@ -1,4 +1,4 @@
-opencv_contrib_python==3.4.4.19
+opencv_contrib_python==3.4.7.28
 pandas==0.24.2
 tqdm==4.28.1
 numpy==1.16.2
